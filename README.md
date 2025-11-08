@@ -85,21 +85,23 @@ netlify deploy --prod --dir=dist
 
 Or drag and drop the `dist/` folder to Netlify's web interface.
 
-#### 3. GitHub Pages
+#### 3. GitHub Pages (Configured)
 
-Add to `package.json`:
-```json
-{
-  "homepage": "https://yourusername.github.io/FactoryStreetRecords"
-}
-```
+This project is configured to deploy to: **https://sccottyoh.github.io/FactoryStreetRecords**
 
-Then install and use gh-pages:
+**Automatic Deployment:**
+The site will automatically deploy when you push to the `main` branch using GitHub Actions.
+
+**Manual Deployment:**
 ```bash
-npm install --save-dev gh-pages
-npm run build
-npx gh-pages -d dist
+npm run deploy
 ```
+
+**First-time Setup:**
+1. Go to your GitHub repository settings
+2. Navigate to Pages → Source
+3. Select "GitHub Actions" as the source
+4. Push to the main branch to trigger automatic deployment
 
 #### 4. Any Static Host
 
