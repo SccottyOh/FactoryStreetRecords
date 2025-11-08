@@ -62,7 +62,7 @@ const AdminPanel = ({ onLogout, records, onUpdateRecords }) => {
       const newRecords = [];
       const errors = [];
 
-      jsonData.forEach((row, index) => {
+      jsonData.forEach((row: any, index) => {
         const record = {
           id: Number(row.id), title: String(row.title || ''), artist: String(row.artist || ''), price: Number(row.price),
           image: String(row.image || 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&h=400&fit=crop'),
