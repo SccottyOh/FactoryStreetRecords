@@ -627,19 +627,19 @@ export default function App() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterFormat, setFilterFormat] = useState('all');
-  const [filterConditionMedia, setFilterConditionMedia] = useState('all');
-  const [filterConditionCover, setFilterConditionCover] = useState('all');
+  const [filterFormat, setFilterFormat] = useState([]);
+  const [filterConditionMedia, setFilterConditionMedia] = useState([]);
+  const [filterConditionCover, setFilterConditionCover] = useState([]);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [sortBy, setSortBy] = useState('title');
   const [toast, setToast] = useState(null);
   const [priceRange, setPriceRange] = useState([0, 100]);
 
-  const formats = useMemo(() => ['all', ...[...new Set(records.map(r => r.format))]], [records]);
-  
-  const conditionsMedia = useMemo(() => ['all', ...[...new Set(records.map(r => r.conditionMedia))].sort()], [records]);
-  
-  const conditionsCover = useMemo(() => ['all', ...[...new Set(records.map(r => r.conditionCover))].sort()], [records]);
+  const formats = useMemo(() => [...new Set(records.map(r => r.format))], [records]);
+
+  const conditionsMedia = useMemo(() => [...new Set(records.map(r => r.conditionMedia))].sort(), [records]);
+
+  const conditionsCover = useMemo(() => [...new Set(records.map(r => r.conditionCover))].sort(), [records]);
 
   const priceMin = useMemo(() => Math.floor(Math.min(...records.map(r => r.price))), [records]);
   const priceMax = useMemo(() => Math.ceil(Math.max(...records.map(r => r.price))), [records]);
@@ -655,9 +655,9 @@ export default function App() {
 
   const filteredRecords = useMemo(() => {
     let filtered = records.filter(r => !cart.find(c => c.id === r.id));
-    if (filterFormat !== 'all') filtered = filtered.filter(r => r.format === filterFormat);
-    if (filterConditionMedia !== 'all') filtered = filtered.filter(r => r.conditionMedia === filterConditionMedia);
-    if (filterConditionCover !== 'all') filtered = filtered.filter(r => r.conditionCover === filterConditionCover);
+    if (filterFormat.length > 0) filtered = filtered.filter(r => filterFormat.includes(r.format));
+    if (filterConditionMedia.length > 0) filtered = filtered.filter(r => filterConditionMedia.includes(r.conditionMedia));
+    if (filterConditionCover.length > 0) filtered = filtered.filter(r => filterConditionCover.includes(r.conditionCover));
     filtered = filtered.filter(r => r.price >= priceRange[0] && r.price <= priceRange[1]);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -692,6 +692,14 @@ export default function App() {
   const moveToCart = (record) => {
     addToCart(record);
     setWishlist(wishlist.filter(i => i.id !== record.id));
+  };
+
+  const toggleFilterItem = (array, setArray, item) => {
+    if (array.includes(item)) {
+      setArray(array.filter(i => i !== item));
+    } else {
+      setArray([...array, item]);
+    }
   };
 
   const cartTotal = cart.reduce((s, i) => s + i.price, 0);
@@ -746,9 +754,9 @@ export default function App() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
                 Filter
-                {(filterFormat !== 'all' || filterConditionMedia !== 'all' || filterConditionCover !== 'all') && (
+                {(filterFormat.length > 0 || filterConditionMedia.length > 0 || filterConditionCover.length > 0) && (
                   <span className="bg-amber-500 text-slate-900 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {(filterFormat !== 'all' ? 1 : 0) + (filterConditionMedia !== 'all' ? 1 : 0) + (filterConditionCover !== 'all' ? 1 : 0)}
+                    {filterFormat.length + filterConditionMedia.length + filterConditionCover.length}
                   </span>
                 )}
                 <ChevronDown className={`w-4 h-4 transition-transform ${showFilterDropdown ? 'rotate-180' : ''}`} size={16} />
@@ -759,23 +767,22 @@ export default function App() {
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-slate-900 text-sm">Format</h3>
-                      {filterFormat !== 'all' && (
-                        <button onClick={() => setFilterFormat('all')} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
-                          Clear
+                      {filterFormat.length > 0 && (
+                        <button onClick={() => setFilterFormat([])} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
+                          Clear All
                         </button>
                       )}
                     </div>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {formats.map(f => (
                         <label key={f} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
-                          <input 
-                            type="radio" 
-                            name="format"
-                            checked={filterFormat === f}
-                            onChange={() => setFilterFormat(f)}
-                            className="w-4 h-4 text-amber-500 focus:ring-amber-500"
+                          <input
+                            type="checkbox"
+                            checked={filterFormat.includes(f)}
+                            onChange={() => toggleFilterItem(filterFormat, setFilterFormat, f)}
+                            className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500"
                           />
-                          <span className="text-sm text-slate-700">{f === 'all' ? 'All Formats' : f}</span>
+                          <span className="text-sm text-slate-700">{f}</span>
                         </label>
                       ))}
                     </div>
@@ -784,23 +791,22 @@ export default function App() {
                   <div className="mb-4 pt-4 border-t border-slate-200">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-slate-900 text-sm">Media Condition</h3>
-                      {filterConditionMedia !== 'all' && (
-                        <button onClick={() => setFilterConditionMedia('all')} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
-                          Clear
+                      {filterConditionMedia.length > 0 && (
+                        <button onClick={() => setFilterConditionMedia([])} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
+                          Clear All
                         </button>
                       )}
                     </div>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {conditionsMedia.map(c => (
                         <label key={c} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
-                          <input 
-                            type="radio"
-                            name="conditionMedia"
-                            checked={filterConditionMedia === c}
-                            onChange={() => setFilterConditionMedia(c)}
-                            className="w-4 h-4 text-amber-500 focus:ring-amber-500"
+                          <input
+                            type="checkbox"
+                            checked={filterConditionMedia.includes(c)}
+                            onChange={() => toggleFilterItem(filterConditionMedia, setFilterConditionMedia, c)}
+                            className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500"
                           />
-                          <span className="text-sm text-slate-700">{c === 'all' ? 'All Conditions' : c}</span>
+                          <span className="text-sm text-slate-700">{c}</span>
                         </label>
                       ))}
                     </div>
@@ -809,23 +815,22 @@ export default function App() {
                   <div className="pt-4 border-t border-slate-200">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-slate-900 text-sm">Cover Condition</h3>
-                      {filterConditionCover !== 'all' && (
-                        <button onClick={() => setFilterConditionCover('all')} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
-                          Clear
+                      {filterConditionCover.length > 0 && (
+                        <button onClick={() => setFilterConditionCover([])} className="text-xs text-amber-600 hover:text-amber-700 font-medium">
+                          Clear All
                         </button>
                       )}
                     </div>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {conditionsCover.map(c => (
                         <label key={c} className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 p-2 rounded">
-                          <input 
-                            type="radio"
-                            name="conditionCover"
-                            checked={filterConditionCover === c}
-                            onChange={() => setFilterConditionCover(c)}
-                            className="w-4 h-4 text-amber-500 focus:ring-amber-500"
+                          <input
+                            type="checkbox"
+                            checked={filterConditionCover.includes(c)}
+                            onChange={() => toggleFilterItem(filterConditionCover, setFilterConditionCover, c)}
+                            className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500"
                           />
-                          <span className="text-sm text-slate-700">{c === 'all' ? 'All Conditions' : c}</span>
+                          <span className="text-sm text-slate-700">{c}</span>
                         </label>
                       ))}
                     </div>
@@ -863,11 +868,11 @@ export default function App() {
                   </div>
 
                   <div className="pt-4 border-t border-slate-200 mt-4">
-                    <button 
+                    <button
                       onClick={() => {
-                        setFilterFormat('all');
-                        setFilterConditionMedia('all');
-                        setFilterConditionCover('all');
+                        setFilterFormat([]);
+                        setFilterConditionMedia([]);
+                        setFilterConditionCover([]);
                         setPriceRange([priceMin, priceMax]);
                       }}
                       className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
