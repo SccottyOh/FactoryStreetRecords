@@ -5,6 +5,146 @@ import * as XLSX from 'xlsx';
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'vinyl2025';
 
+// IMPORTANT: Replace with your Square Application ID
+// Get it from: https://developer.squareup.com/apps
+const SQUARE_APPLICATION_ID = 'sandbox-sq0idb-YOUR_APP_ID_HERE'; // Replace with your Square App ID
+const SQUARE_LOCATION_ID = 'YOUR_LOCATION_ID_HERE'; // Replace with your Square Location ID
+
+// Square Checkout Component
+const SquareCheckout = ({ amount, cart, onSuccess, onCancel }) => {
+  const [card, setCard] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const initializeSquare = async () => {
+      if (!window.Square) {
+        setError('Square.js failed to load');
+        return;
+      }
+
+      try {
+        const payments = window.Square.payments(SQUARE_APPLICATION_ID, SQUARE_LOCATION_ID);
+        const cardInstance = await payments.card();
+        await cardInstance.attach('#card-container');
+        setCard(cardInstance);
+      } catch (e) {
+        setError('Failed to initialize Square payment form. Please check your credentials.');
+        console.error('Square initialization error:', e);
+      }
+    };
+
+    initializeSquare();
+
+    return () => {
+      if (card) {
+        card.destroy();
+      }
+    };
+  }, []);
+
+  const handlePayment = async (e) => {
+    e.preventDefault();
+
+    if (!card) {
+      setError('Payment form not initialized');
+      return;
+    }
+
+    setProcessing(true);
+    setError('');
+
+    try {
+      const result = await card.tokenize();
+
+      if (result.status === 'OK') {
+        // In a real app, send result.token to your backend
+        // For demo, we'll just simulate success
+        console.log('Payment token:', result.token);
+
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        onSuccess({
+          token: result.token,
+          amount: amount,
+          items: cart
+        });
+      } else {
+        setError(result.errors?.[0]?.message || 'Payment failed');
+      }
+    } catch (e) {
+      setError('Payment processing failed');
+      console.error('Payment error:', e);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <h3 className="text-xl font-bold mb-4 text-slate-900">Complete Your Purchase</h3>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <AlertCircle size={16} className="inline mr-2" />
+          {error}
+        </div>
+      )}
+
+      <div className="mb-6">
+        <div className="bg-slate-50 p-4 rounded-lg mb-4">
+          <h4 className="font-semibold text-sm text-slate-700 mb-2">Order Summary</h4>
+          {cart.map(item => (
+            <div key={item.id} className="flex justify-between text-sm mb-1">
+              <span>{item.title}</span>
+              <span className="font-medium">${item.price.toFixed(2)}</span>
+            </div>
+          ))}
+          <div className="border-t border-slate-300 mt-2 pt-2 flex justify-between font-bold">
+            <span>Total</span>
+            <span className="text-amber-600">${amount.toFixed(2)}</span>
+          </div>
+        </div>
+
+        <form onSubmit={handlePayment}>
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Card Information
+            </label>
+            <div id="card-container" className="min-h-[100px] p-3 border-2 border-slate-300 rounded-lg"></div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={processing}
+              className="flex-1 px-4 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={processing}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {processing ? 'Processing...' : `Pay $${amount.toFixed(2)}`}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="text-xs text-slate-500 text-center mt-4">
+        <p>🔒 Secure payment powered by Square</p>
+        <p className="mt-1">
+          Using <strong>Sandbox Mode</strong> - Test cards will work
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Toast Notification Component
 const Toast = ({ message, type, onClose }) => {
   useEffect(() => {
@@ -171,6 +311,27 @@ const AdminPanel = ({ onLogout, records, onUpdateRecords }) => {
               <li>Audio samples are optional URL paths</li>
             </ul>
           </div>
+        </div>
+
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 shadow-sm">
+          <h3 className="text-lg font-bold mb-4 text-red-800 flex items-center gap-2">
+            <AlertCircle size={20} />
+            Reset Inventory
+          </h3>
+          <p className="text-sm text-slate-700 mb-4">
+            This will reset the inventory back to the default records database. All uploaded records will be lost.
+          </p>
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to reset the inventory to default? This will delete all uploaded records and cannot be undone.')) {
+                onUpdateRecords(INITIAL_RECORDS_DATABASE);
+                setMessage({ type: 'success', text: 'Inventory reset to default database successfully!' });
+              }
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium text-sm transition-colors"
+          >
+            Reset to Default Inventory
+          </button>
         </div>
       </main>
     </div>
@@ -427,8 +588,35 @@ const RecordDetail = ({ record, onBack, onAddToCart, wishlist, setWishlist, setT
   );
 };
 
+// Helper functions for localStorage persistence
+const STORAGE_KEY = 'factory_street_records_inventory';
+
+const loadRecordsFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Validate that we have an array with at least one record
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading records from localStorage:', error);
+  }
+  return INITIAL_RECORDS_DATABASE;
+};
+
+const saveRecordsToStorage = (records) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch (error) {
+    console.error('Error saving records to localStorage:', error);
+  }
+};
+
 export default function App() {
-  const [records, setRecords] = useState(INITIAL_RECORDS_DATABASE);
+  const [records, setRecords] = useState(loadRecordsFromStorage);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -436,6 +624,7 @@ export default function App() {
   const [wishlist, setWishlist] = useState([]);
   const [showCart, setShowCart] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFormat, setFilterFormat] = useState('all');
@@ -458,6 +647,11 @@ export default function App() {
   useEffect(() => {
     setPriceRange([priceMin, priceMax]);
   }, [priceMin, priceMax]);
+
+  // Save records to localStorage whenever they change
+  useEffect(() => {
+    saveRecordsToStorage(records);
+  }, [records]);
 
   const filteredRecords = useMemo(() => {
     let filtered = records.filter(r => !cart.find(c => c.id === r.id));
@@ -758,7 +952,15 @@ export default function App() {
                   <span className="text-xl font-bold">Total:</span>
                   <span className="text-2xl font-bold text-amber-400">${cartTotal.toFixed(2)}</span>
                 </div>
-                <button className="w-full bg-amber-500 text-white py-3 rounded-lg font-bold">Checkout</button>
+                <button
+                  onClick={() => {
+                    setShowCart(false);
+                    setShowCheckout(true);
+                  }}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-lg font-bold transition-colors"
+                >
+                  Proceed to Checkout
+                </button>
               </div>
             )}
           </div>
@@ -842,6 +1044,38 @@ export default function App() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showCheckout && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b flex items-center justify-between bg-gradient-to-r from-amber-500 to-amber-600 text-white">
+              <h2 className="text-2xl font-bold">Checkout</h2>
+              <button onClick={() => setShowCheckout(false)}>
+                <X size={24} />
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+              <SquareCheckout
+                amount={cartTotal}
+                cart={cart}
+                onSuccess={(paymentResult) => {
+                  console.log('Payment successful:', paymentResult);
+                  setCart([]);
+                  setShowCheckout(false);
+                  setToast({
+                    message: 'Payment successful! Thank you for your order.',
+                    type: 'success'
+                  });
+                }}
+                onCancel={() => {
+                  setShowCheckout(false);
+                  setShowCart(true);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}
