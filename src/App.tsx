@@ -764,6 +764,87 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {showWishlist && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b flex items-center justify-between bg-gradient-to-r from-red-600 to-pink-600 text-white">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Heart className="fill-white" size={28} />
+                Wishlist
+              </h2>
+              <button onClick={() => setShowWishlist(false)}><X size={24} /></button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {wishlist.length === 0 ? (
+                <div className="text-center py-8">
+                  <Heart className="mx-auto mb-4 text-slate-300" size={48} />
+                  <p className="text-slate-600">Your wishlist is empty</p>
+                  <p className="text-sm text-slate-400 mt-2">Click the heart icon on records to save your favorites!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {wishlist.map(item => (
+                    <div key={item.id} className="flex gap-4 bg-slate-50 p-4 rounded-lg border-2 border-transparent hover:border-red-200 transition-colors">
+                      <img src={item.image} alt={item.title} className="w-24 h-24 object-cover rounded-lg shadow-md" />
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg text-slate-900">{item.title}</h3>
+                        <p className="text-sm text-slate-600 mb-1">{item.artist}</p>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xs bg-slate-200 px-2 py-1 rounded">{item.format}</span>
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">{item.conditionMedia}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xl font-bold text-amber-600">${item.price.toFixed(2)}</span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                moveToCart(item);
+                                setToast({ message: `${item.title} moved to cart!`, type: 'success' });
+                              }}
+                              className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-1"
+                            >
+                              <ShoppingCart size={16} />
+                              Add to Cart
+                            </button>
+                            <button
+                              onClick={() => toggleWishlist(item)}
+                              className="text-red-500 hover:text-red-700 font-medium text-sm px-3 py-2 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {wishlist.length > 0 && (
+              <div className="p-6 border-t bg-gradient-to-r from-slate-50 to-red-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">
+                      {wishlist.length} {wishlist.length === 1 ? 'item' : 'items'} in your wishlist
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      wishlist.forEach(item => moveToCart(item));
+                      setShowWishlist(false);
+                      setToast({ message: 'All wishlist items moved to cart!', type: 'success' });
+                    }}
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-6 py-3 rounded-lg font-bold transition-all transform hover:scale-105"
+                  >
+                    Move All to Cart
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
