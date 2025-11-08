@@ -312,6 +312,27 @@ const AdminPanel = ({ onLogout, records, onUpdateRecords }) => {
             </ul>
           </div>
         </div>
+
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-8 shadow-sm">
+          <h3 className="text-lg font-bold mb-4 text-red-800 flex items-center gap-2">
+            <AlertCircle size={20} />
+            Reset Inventory
+          </h3>
+          <p className="text-sm text-slate-700 mb-4">
+            This will reset the inventory back to the default records database. All uploaded records will be lost.
+          </p>
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to reset the inventory to default? This will delete all uploaded records and cannot be undone.')) {
+                onUpdateRecords(INITIAL_RECORDS_DATABASE);
+                setMessage({ type: 'success', text: 'Inventory reset to default database successfully!' });
+              }
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-medium text-sm transition-colors"
+          >
+            Reset to Default Inventory
+          </button>
+        </div>
       </main>
     </div>
   );
@@ -567,8 +588,35 @@ const RecordDetail = ({ record, onBack, onAddToCart, wishlist, setWishlist, setT
   );
 };
 
+// Helper functions for localStorage persistence
+const STORAGE_KEY = 'factory_street_records_inventory';
+
+const loadRecordsFromStorage = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Validate that we have an array with at least one record
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading records from localStorage:', error);
+  }
+  return INITIAL_RECORDS_DATABASE;
+};
+
+const saveRecordsToStorage = (records) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch (error) {
+    console.error('Error saving records to localStorage:', error);
+  }
+};
+
 export default function App() {
-  const [records, setRecords] = useState(INITIAL_RECORDS_DATABASE);
+  const [records, setRecords] = useState(loadRecordsFromStorage);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
@@ -599,6 +647,11 @@ export default function App() {
   useEffect(() => {
     setPriceRange([priceMin, priceMax]);
   }, [priceMin, priceMax]);
+
+  // Save records to localStorage whenever they change
+  useEffect(() => {
+    saveRecordsToStorage(records);
+  }, [records]);
 
   const filteredRecords = useMemo(() => {
     let filtered = records.filter(r => !cart.find(c => c.id === r.id));
