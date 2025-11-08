@@ -397,65 +397,6 @@ const RecordDetail = ({ record, onBack, onAddToCart, wishlist, setWishlist, setT
                 <Heart className={wishlist.find(w => w.id === record.id) ? 'fill-amber-600' : ''} size={20} />
                 {wishlist.find(w => w.id === record.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
               </button>
-
-              <div className="mb-6 pb-6 border-b border-slate-200">
-                <h3 className="font-bold text-lg mb-3 text-slate-900">Description</h3>
-                <p className="text-slate-700 leading-relaxed">{record.description}</p>
-              </div>
-
-              <div className="space-y-4 mb-6">
-                <h3 className="font-bold text-lg text-slate-900 mb-3">Product Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Label</div>
-                    <div className="text-sm text-slate-900 font-medium">{record.label}</div>
-                  </div>
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Format</div>
-                    <div className="text-sm text-slate-900 font-medium">{record.format}</div>
-                  </div>
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Country</div>
-                    <div className="text-sm text-slate-900 font-medium">{record.country}</div>
-                  </div>
-                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Year</div>
-                    <div className="text-sm text-slate-900 font-medium">{record.year}</div>
-                  </div>
-                </div>
-                <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                  <div className="text-xs font-semibold text-slate-500 uppercase mb-1">Style</div>
-                  <div className="text-sm text-slate-900 font-medium">{record.style}</div>
-                </div>
-              </div>
-
-              <div className="mb-6 pb-6 border-b border-slate-200">
-                <h3 className="font-bold text-lg mb-3 text-slate-900">Condition</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
-                    <div className="text-xs font-semibold text-green-700 uppercase mb-1">Media Condition</div>
-                    <div className="text-sm text-slate-900 font-bold">{record.conditionMedia}</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-sky-50 p-4 rounded-lg border border-blue-200">
-                    <div className="text-xs font-semibold text-blue-700 uppercase mb-1">Cover Condition</div>
-                    <div className="text-sm text-slate-900 font-bold">{record.conditionCover}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-5 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 bg-amber-500 text-white rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 mb-1">Shipping Information</h3>
-                    <p className="text-sm text-slate-700">{record.shipping}</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
